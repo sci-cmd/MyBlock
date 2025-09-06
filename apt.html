@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyBlock</title>
+    <link rel="stylesheet" href="apt.css">
+    <link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&display=swap" rel="stylesheet">
+</head>
+<body>
+<h1 style="color: #b0b0b0;">Please fill out your details:</h1>
+
+    <form id="apartment-form">
+        <label for="Name" class="questions">Your Name:</label>
+        <input type="text" name="name" id="Name" required placeholder="Your Full Name">
+        
+        <label for="building" class="questions">Select Your Building:</label>
+        <div class="radio-group">
+            <input type="radio" name="building" value="A" id="buildingA" required> 
+            <label for="buildingA" class="building-question">Building A</label>
+            <input type="radio" name="building" value="B" id="buildingB" required> 
+            <label for="buildingB" class="building-question">Building B</label>
+        </div>
+        
+        <label for="Floor" class="questions">Your Floor:</label>
+        <select name="Floor" id="Floor" required>
+            <option value="" class="building-question">Select Floor...</option>
+            <option value="Floor 1">Floor 1</option>
+            <option value="Ground Floor">Ground Floor</option>
+        </select>
+        
+        <input type="submit" value="Check Availability" id="Reside-Button">
+    </form>
+
+    <div class="residents-section">
+        <div class="residents-title">Current Residents</div>
+        <div id="residents-list"></div>
+        <button id="clear-all" class="clear-all-btn" onclick="clearAllResidents()">Clear All Residents</button>
+    </div>
+
+    <script src="apt.js"></script>
+</body>
+</html>
