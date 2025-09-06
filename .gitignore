@@ -1,0 +1,16 @@
+# Logs
+*.log
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Node modules (if you ever use npm later)
+node_modules/
+
+# Build output (if you ever build your project later)
+dist/
+build/
+
+# Environment files (never upload secrets)
+.env
