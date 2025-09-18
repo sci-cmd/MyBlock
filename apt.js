@@ -1,4 +1,11 @@
 const STORAGE_KEY = 'apartment_residents';
+const ADMIN_PASSWORD = "scientist100%"; 
+
+
+function isAdmin() {
+    const entered = prompt("Enter admin password:");
+    return entered === ADMIN_PASSWORD;
+}
 
 
 function loadResidents() {
@@ -6,10 +13,10 @@ function loadResidents() {
     return stored ? JSON.parse(stored) : {};
 }
 
-
 function saveResidents(residents) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(residents));
 }
+
 
 function displayResidents() {
     const residents = loadResidents();
@@ -34,6 +41,11 @@ function displayResidents() {
 
 
 function deleteResident(location) {
+    if (!isAdmin()) {
+        showNotification('error', 'Unauthorized', 'Only admin can remove residents.');
+        return;
+    }
+
     const residents = loadResidents();
     const residentName = residents[location];
     
@@ -45,7 +57,13 @@ function deleteResident(location) {
     }
 }
 
+
 function clearAllResidents() {
+    if (!isAdmin()) {
+        showNotification('error', 'Unauthorized', 'Only admin can clear residents.');
+        return;
+    }
+
     const residents = loadResidents();
     const count = Object.keys(residents).length;
     
@@ -60,7 +78,6 @@ function clearAllResidents() {
 
 
 function showNotification(type, title, message) {
-    
     const existing = document.querySelector('.notification');
     if (existing) {
         existing.remove();
@@ -81,10 +98,7 @@ function showNotification(type, title, message) {
 
     document.body.appendChild(notification);
 
-    
     setTimeout(() => notification.classList.add('show'), 100);
-
-    
     setTimeout(() => {
         notification.classList.remove('show');
         setTimeout(() => notification.remove(), 400);
@@ -100,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const buildingElement = document.querySelector('input[name="building"]:checked');
         const floor = document.getElementById('Floor').value;
 
-        
         if (!name || !buildingElement || !floor) {
             showNotification('error', 'Incomplete Form', 'Please fill out all fields!');
             return;
@@ -110,26 +123,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const buildingName = building === 'A' ? 'Building A' : 'Building B';
         const location = `${floor}, ${buildingName}`;
 
-        
         const residents = loadResidents();
 
-        
         if (residents[location]) {
             showNotification('error', 'Floor Occupied', 'This floor has already been occupied');
             return;
         }
 
-        
-
-        
         residents[location] = name;
         saveResidents(residents);
 
-        
         showNotification('success', 'Welcome!', `Okay ${name}, you're now a resident of ${location}`);
 
-
         this.reset();
-        
         displayResidents();
-    });})
+    });
+
+    displayResidents();
+});
