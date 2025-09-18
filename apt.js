@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'apartment_residents';
-const ADMIN_PASSWORD = "scientist100%"; 
+const ADMIN_PASSWORD = "myblox.100%"; 
 
 
 function isAdmin() {
@@ -141,3 +141,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
     displayResidents();
 });
+
