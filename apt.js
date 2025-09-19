@@ -59,6 +59,7 @@ function showNotification(type, title, message) {
 }
 
 // Delete individual resident
+// Replace your deleteResident function with this:
 async function deleteResident(docId, name, location) {
     if (!isAdmin()) {
         showNotification('error', 'Unauthorized', 'Only admin can remove residents.');
@@ -67,7 +68,12 @@ async function deleteResident(docId, name, location) {
 
     if (confirm(`Are you sure you want to remove ${name} from ${location}?`)) {
         try {
-            await deleteDoc(doc(db, "residents", docId));
+            const residentRef = doc(db, "residents", docId);
+            
+            // Add admin key then delete
+            await updateDoc(residentRef, { adminKey: ADMIN_PASSWORD });
+            await deleteDoc(residentRef);
+            
             showNotification('success', 'Resident Removed', `${name} has been removed from ${location}`);
         } catch (err) {
             console.error("Error deleting resident:", err);
@@ -176,3 +182,4 @@ clearAllBtn.addEventListener('click', async () => {
         showNotification('error', 'Error', 'Failed to clear residents');
     }
 });
+
