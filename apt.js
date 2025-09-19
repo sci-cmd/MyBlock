@@ -1,82 +1,35 @@
-const STORAGE_KEY = 'apartment_residents';
-const ADMIN_PASSWORD = "myblox.100%"; 
+// Firebase imports
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
+// Firebase config
+const firebaseConfig = {
+    apiKey: "AIzaSyA3iPCykkBynU6n1sbqaI67auU1CeSsrm0",
+    authDomain: "myblox-app.firebaseapp.com",
+    projectId: "myblox-app",
+    storageBucket: "myblox-app.firebasestorage.app",
+    messagingSenderId: "94559433237",
+    appId: "1:94559433237:web:48be37bca154ccbc81141c",
+    measurementId: "G-B544Z7V6Y4"
+};
 
+const ADMIN_PASSWORD = "myblox.100%";
+
+// Init Firebase + Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const form = document.getElementById("apartment-form");
+const residentsList = document.getElementById("residents-list");
+const clearAllBtn = document.getElementById("clear-all");
+
+// Admin check function
 function isAdmin() {
     const entered = prompt("Enter admin password:");
     return entered === ADMIN_PASSWORD;
 }
 
-
-function loadResidents() {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : {};
-}
-
-function saveResidents(residents) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(residents));
-}
-
-
-function displayResidents() {
-    const residents = loadResidents();
-    const listElement = document.getElementById('residents-list');
-    const clearAllBtn = document.getElementById('clear-all');
-    
-    const entries = Object.entries(residents);
-    if (entries.length === 0) {
-        listElement.innerHTML = '<div class="no-residents">No residents yet</div>';
-        clearAllBtn.disabled = true;
-        return;
-    }
-
-    clearAllBtn.disabled = false;
-    listElement.innerHTML = entries.map(([location, name]) => 
-        `<div class="resident-item">
-            <div class="resident-info">${name} - ${location}</div>
-            <button class="delete-btn" onclick="deleteResident('${location}')">Remove</button>
-        </div>`
-    ).join('');
-}
-
-
-function deleteResident(location) {
-    if (!isAdmin()) {
-        showNotification('error', 'Unauthorized', 'Only admin can remove residents.');
-        return;
-    }
-
-    const residents = loadResidents();
-    const residentName = residents[location];
-    
-    if (confirm(`Are you sure you want to remove ${residentName} from ${location}?`)) {
-        delete residents[location];
-        saveResidents(residents);
-        displayResidents();
-        showNotification('success', 'Resident Removed', `${residentName} has been removed from ${location}`);
-    }
-}
-
-
-function clearAllResidents() {
-    if (!isAdmin()) {
-        showNotification('error', 'Unauthorized', 'Only admin can clear residents.');
-        return;
-    }
-
-    const residents = loadResidents();
-    const count = Object.keys(residents).length;
-    
-    if (count === 0) return;
-    
-    if (confirm(`Are you sure you want to remove all ${count} resident(s)? This action cannot be undone.`)) {
-        localStorage.removeItem(STORAGE_KEY);
-        displayResidents();
-        showNotification('success', 'All Cleared', `All ${count} resident(s) have been removed`);
-    }
-}
-
-
+// Show notification function
 function showNotification(type, title, message) {
     const existing = document.querySelector('.notification');
     if (existing) {
@@ -105,40 +58,121 @@ function showNotification(type, title, message) {
     }, 5000);
 }
 
+// Delete individual resident
+async function deleteResident(docId, name, location) {
+    if (!isAdmin()) {
+        showNotification('error', 'Unauthorized', 'Only admin can remove residents.');
+        return;
+    }
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('apartment-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const name = document.getElementById('Name').value.trim();
-        const buildingElement = document.querySelector('input[name="building"]:checked');
-        const floor = document.getElementById('Floor').value;
-
-        if (!name || !buildingElement || !floor) {
-            showNotification('error', 'Incomplete Form', 'Please fill out all fields!');
-            return;
+    if (confirm(`Are you sure you want to remove ${name} from ${location}?`)) {
+        try {
+            await deleteDoc(doc(db, "residents", docId));
+            showNotification('success', 'Resident Removed', `${name} has been removed from ${location}`);
+        } catch (err) {
+            console.error("Error deleting resident:", err);
+            showNotification('error', 'Error', 'Failed to remove resident');
         }
+    }
+}
 
-        const building = buildingElement.value;
-        const buildingName = building === 'A' ? 'Building A' : 'Building B';
-        const location = `${floor}, ${buildingName}`;
+// Make deleteResident available globally
+window.deleteResident = deleteResident;
 
-        const residents = loadResidents();
+// Add resident
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-        if (residents[location]) {
+    const name = document.getElementById("Name").value.trim();
+    const buildingElement = document.querySelector("input[name='building']:checked");
+    const floor = document.getElementById("Floor").value;
+
+    if (!name || !buildingElement || !floor) {
+        showNotification('error', 'Incomplete Form', 'Please fill out all fields!');
+        return;
+    }
+
+    const building = buildingElement.value;
+    const buildingName = building === 'A' ? 'Building A' : 'Building B';
+    const location = `${floor}, ${buildingName}`;
+
+    try {
+        // Check if location is already occupied
+        const querySnapshot = await getDocs(collection(db, "residents"));
+        let isOccupied = false;
+        
+        querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const existingLocation = `${data.floor}, Building ${data.building}`;
+            if (existingLocation === location) {
+                isOccupied = true;
+            }
+        });
+
+        if (isOccupied) {
             showNotification('error', 'Floor Occupied', 'This floor has already been occupied');
             return;
         }
 
-        residents[location] = name;
-        saveResidents(residents);
-
+        await addDoc(collection(db, "residents"), { name, building, floor });
         showNotification('success', 'Welcome!', `Okay ${name}, you're now a resident of ${location}`);
-
-        this.reset();
-        displayResidents();
-    });
-
-    displayResidents();
+        form.reset();
+    } catch (err) {
+        console.error("Error adding resident:", err);
+        showNotification('error', 'Error', 'Failed to register resident');
+    }
 });
 
+// Live updates for residents list
+onSnapshot(collection(db, "residents"), (snapshot) => {
+    residentsList.innerHTML = "";
+    
+    if (snapshot.empty) {
+        residentsList.innerHTML = '<div class="no-residents">No residents yet</div>';
+        clearAllBtn.disabled = true;
+        return;
+    }
+
+    clearAllBtn.disabled = false;
+    
+    snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const location = `${data.floor}, Building ${data.building}`;
+        
+        const div = document.createElement("div");
+        div.className = "resident-item";
+        div.innerHTML = `
+            <div class="resident-info">${data.name} - ${location}</div>
+            <button class="delete-btn" onclick="deleteResident('${docSnap.id}', '${data.name}', '${location}')">Remove</button>
+        `;
+        residentsList.appendChild(div);
+    });
+});
+
+// Clear all residents
+clearAllBtn.addEventListener('click', async () => {
+    if (!isAdmin()) {
+        showNotification('error', 'Unauthorized', 'Only admin can clear residents.');
+        return;
+    }
+
+    try {
+        const querySnapshot = await getDocs(collection(db, "residents"));
+        const count = querySnapshot.size;
+        
+        if (count === 0) return;
+        
+        if (confirm(`Are you sure you want to remove all ${count} resident(s)? This action cannot be undone.`)) {
+            const deletePromises = [];
+            querySnapshot.forEach((docSnap) => {
+                deletePromises.push(deleteDoc(doc(db, "residents", docSnap.id)));
+            });
+            
+            await Promise.all(deletePromises);
+            showNotification('success', 'All Cleared', `All ${count} resident(s) have been removed`);
+        }
+    } catch (err) {
+        console.error("Error clearing residents:", err);
+        showNotification('error', 'Error', 'Failed to clear residents');
+    }
+});
