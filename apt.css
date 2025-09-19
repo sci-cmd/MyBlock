@@ -180,7 +180,6 @@ input[type="radio"] {
     opacity: 0.95;
 }
 
-
 .residents-section {
     margin-top: 30px;
     background-color: #3a3a3a;
@@ -264,4 +263,5 @@ input[type="radio"] {
     color: #888;
     font-style: italic;
     text-align: center;
-    font-family: 'funnel display';}
+    font-family: 'funnel display';
+}
