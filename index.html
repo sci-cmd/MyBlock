@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1 style="color: #b0b0b0;">Please fill out your details:</h1>
+    <h1>Please fill out your details:</h1>
 
     <form id="apartment-form">
         <label for="Name" class="questions">Your Name:</label>
@@ -35,68 +35,9 @@
     <div class="residents-section">
         <div class="residents-title">Current Residents</div>
         <div id="residents-list"></div>
-        <button id="clear-all" class="clear-all-btn" onclick="clearAllResidents()">Clear All Residents</button>
+        <button id="clear-all" class="clear-all-btn">Clear All Residents</button>
     </div>
 
-    <!-- Firestore Integration -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-      import { getFirestore, collection, addDoc, getDocs, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-
-      // Firebase config
-      const firebaseConfig = {
-        apiKey: "AIzaSyA3iPCykkBynU6n1sbqaI67auU1CeSsrm0",
-        authDomain: "myblox-app.firebaseapp.com",
-        projectId: "myblox-app",
-        storageBucket: "myblox-app.firebasestorage.app",
-        messagingSenderId: "94559433237",
-        appId: "1:94559433237:web:48be37bca154ccbc81141c",
-        measurementId: "G-B544Z7V6Y4"
-      };
-
-      // Init Firebase + Firestore
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-
-      const form = document.getElementById("apartment-form");
-      const residentsList = document.getElementById("residents-list");
-
-      // Add resident
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const name = document.getElementById("Name").value.trim();
-        const building = document.querySelector("input[name='building']:checked")?.value;
-        const floor = document.getElementById("Floor").value;
-
-        if (!name || !building || !floor) return;
-
-        try {
-          await addDoc(collection(db, "residents"), { name, building, floor });
-          form.reset();
-        } catch (err) {
-          console.error("Error adding resident:", err);
-        }
-      });
-
-      // Live updates
-      onSnapshot(collection(db, "residents"), (snapshot) => {
-        residentsList.innerHTML = "";
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          const div = document.createElement("div");
-          div.textContent = `${data.name} — Building ${data.building}, ${data.floor}`;
-          residentsList.appendChild(div);
-        });
-      });
-
-      // Clear all
-      window.clearAllResidents = async () => {
-        const querySnapshot = await getDocs(collection(db, "residents"));
-        querySnapshot.forEach(async (docSnap) => {
-          await deleteDoc(doc(db, "residents", docSnap.id));
-        });
-      };
-    </script>
+    <script src="apt.js" type="module"></script>
 </body>
 </html>
